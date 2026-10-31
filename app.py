@@ -8,6 +8,7 @@ from supabase import create_client
 
 from absences import (DIVISEUR_JOURS, HEURES_MENSUELLES, TYPES, jours_sur_mois,
                       total_retenues)
+from bulletin_pdf import generer_bulletin_pdf
 from conges import (SEMAINE_OUVRABLE, SEMAINE_OUVREE, jours_acquis,
                     jours_decomptes, solde_conges)
 from paie_congo import ParametresPaie, calculer_bulletin
@@ -212,6 +213,16 @@ def page_bulletin(sb, eid):
         f"- Impôt sur salaire : {fmt(b['impot'])}\n"
         f"- Charges employeur : {fmt(b['charges_employeur'])}"
     )
+
+    try:
+        entreprise = sb.table("entreprises").select("*").eq("id", eid).execute().data[0]
+        pdf = generer_bulletin_pdf(entreprise, e, c, mois, b, demo=mode_demo)
+        st.download_button(
+            "Télécharger le bulletin (PDF)", pdf, mime="application/pdf",
+            file_name=f"bulletin_{e['matricule']}_{mois:%Y-%m}.pdf",
+        )
+    except Exception as err:
+        st.caption(f"PDF indisponible : {err}")
 
     if st.button("Enregistrer le bulletin", type="primary", disabled=mode_demo):
         try:
