@@ -34,8 +34,8 @@ def page_connexion():
             get_client().auth.sign_in_with_password({"email": email, "password": mdp})
             st.session_state.connecte = True
             st.rerun()
-           except Exception as err:
-               st.error(f"Connexion impossible : {err}")
+        except Exception as err:
+            st.error(f"Connexion impossible : {err}")
 
 
 def entreprise_courante(sb):
