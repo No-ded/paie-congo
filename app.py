@@ -2,6 +2,7 @@
 from dataclasses import fields
 from datetime import date
 
+import requests
 import streamlit as st
 from supabase import create_client
 
@@ -31,7 +32,19 @@ def page_connexion():
     mdp = st.text_input("Mot de passe", type="password")
     if st.button("Se connecter", type="primary"):
         try:
-            get_client().auth.sign_in_with_password({"email": email, "password": mdp})
+            # Appel direct à l'API d'authentification de Supabase
+            url = st.secrets["SUPABASE_URL"].strip().rstrip("/")
+            cle = st.secrets["SUPABASE_KEY"].strip()
+            r = requests.post(
+                f"{url}/auth/v1/token?grant_type=password",
+                headers={"apikey": cle, "Content-Type": "application/json"},
+                json={"email": email.strip(), "password": mdp},
+                timeout=20,
+            )
+            data = r.json()
+            if r.status_code != 200:
+                raise Exception(data.get("msg") or data.get("error_description") or data)
+            get_client().postgrest.auth(data["access_token"])
             st.session_state.connecte = True
             st.rerun()
         except Exception as err:
